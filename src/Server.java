@@ -8,12 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
-	private static final int PORT_NUMBER = 4000; //TODO do this a better way
+  //TODO do this a better way
+	private static final int PORT_NUMBER = 4000;
+  private static final String EXIT_MESSAGE = "exit";
   private static List<ClientConnection> activeConnections;
 
   private final static class ClientConnection implements Runnable {
     private final Socket incomingSocket;
     private DataOutputStream outputStream;
+    private String clientName;
 
     private ClientConnection(Socket incomingSocket) {
       this.incomingSocket = incomingSocket;
@@ -28,18 +31,20 @@ public class Server {
     public void run() {
       try {
         DataInputStream inputSteam = new DataInputStream(new BufferedInputStream(incomingSocket.getInputStream()));
+        clientName = inputSteam.readUTF();
         while (true) {
           String data;
           data = inputSteam.readUTF();
-          if (data.equals("exit")) { //TODO exit no longer works
+          if (data.equals(EXIT_MESSAGE)) {
             incomingSocket.close();
             inputSteam.close();
             outputStream.close();
             activeConnections.remove(this);
+            broadCastMessage(clientName + " has exited");
             break;
           }
           System.out.println(data);
-          broadCastMessage(data);
+          broadCastMessage(clientName + ": " + data);
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -54,10 +59,12 @@ public class Server {
 	public static void main(String[] args) {
     activeConnections = new ArrayList<>();
     try {
-      ServerSocket listeningServer = new ServerSocket(PORT_NUMBER); //We need the ServerSocket to detect the incoming connections
+      //We need the ServerSocket to detect the incoming connections
+      ServerSocket listeningServer = new ServerSocket(PORT_NUMBER);
       while (true) {
-        Socket incomingSocket = listeningServer.accept();//We need this socket to facilitate communication
-        System.out.println(incomingSocket);
+        //We need this socket to facilitate communication
+        Socket incomingSocket = listeningServer.accept();
+        System.out.println(incomingSocket); //TODO Make this message more friendly
 
         ClientConnection connection = new ClientConnection(incomingSocket);
         Thread connectionThread = new Thread(connection);
