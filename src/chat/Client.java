@@ -1,3 +1,5 @@
+package chat;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -9,7 +11,6 @@ import java.util.Scanner;
 
 public class Client {
 	private static final int SERVER_PORT_NUMBER = 4000;
-	private static final String EXIT_MESSAGE = "exit";
 	private static Socket serverSocket;
   private static Scanner input;
   private static String clientName;
