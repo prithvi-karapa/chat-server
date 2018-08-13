@@ -1,4 +1,4 @@
-package chat.actions;
+package chat.server.actions;
 
 public interface ChatAction {
   /**

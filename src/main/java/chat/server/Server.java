@@ -1,4 +1,4 @@
-package chat;
+package chat.server;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -13,13 +13,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import chat.actions.ActiveUsersAction;
-import chat.actions.ChatAction;
-import chat.actions.ExitAction;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+import chat.server.actions.ActiveUsersAction;
+import chat.server.actions.ChatAction;
+import chat.server.actions.ExitAction;
 
 public class Server{
-  //TODO do this a better way
-	private static final int PORT_NUMBER = 4000;
+	private int port = 4000;
   private Map<String, ClientConnection> activeConnections;
 
   private final class ClientConnection implements Runnable, ClientConnectionForActions {
@@ -106,16 +112,36 @@ public class Server{
     }
   }
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
     Server server = new Server();
+    server.gatherCommandlineArgs(args);
     server.acceptConnections();
+  }
+
+  public void gatherCommandlineArgs(String[] args) throws ParseException {
+    Options options = new Options();
+    options.addOption("p", "port", true, "port for the chat server");
+    options.addOption("h", false, "print this help message");
+
+    CommandLineParser parser = new DefaultParser();
+    CommandLine cmd = parser.parse( options, args);
+
+    if (cmd.hasOption("h")) {
+      HelpFormatter helpFormatter = new HelpFormatter();
+      helpFormatter.printHelp("Server", options);
+      return;
+    }
+
+    if (cmd.hasOption("p")) {
+      port = Integer.valueOf(cmd.getOptionValue("p"));
+    }
   }
 
   public void acceptConnections() {
     activeConnections = new HashMap<>();
     try {
       //We need the ServerSocket to detect the incoming connections
-      ServerSocket listeningServer = new ServerSocket(PORT_NUMBER);
+      ServerSocket listeningServer = new ServerSocket(port);
       while (true) {
         //We need this socket to facilitate communication
         Socket incomingSocket = listeningServer.accept();

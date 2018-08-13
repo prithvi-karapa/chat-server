@@ -1,6 +1,6 @@
-package chat.actions;
+package chat.server.actions;
 
-import chat.ClientConnectionForActions;
+import chat.server.ClientConnectionForActions;
 
 public class ExitAction implements ChatAction{
   private static final String EXIT_MESSAGE = "exit";

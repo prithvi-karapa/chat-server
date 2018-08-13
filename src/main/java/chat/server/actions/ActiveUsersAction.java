@@ -1,6 +1,6 @@
-package chat.actions;
+package chat.server.actions;
 
-import chat.ClientConnectionForActions;
+import chat.server.ClientConnectionForActions;
 
 public class ActiveUsersAction implements ChatAction{
   private static final String ACTIVE_USER_MESSAGE = "who";
