@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import org.apache.commons.cli.Options;
+
 public class Client {
 	private static final int SERVER_PORT_NUMBER = 4000;
 	private static Socket serverSocket;
@@ -46,6 +48,8 @@ public class Client {
 	}
 
 	public static void main(String[] args) throws Exception {
+		Options options = new Options();
+
     input = new Scanner(System.in); //TODO Switch to a BufferedReader instead of System.in
     assignClientName();
     final InetAddress SERVER_ADDRESS = InetAddress.getByName("localhost");
