@@ -1,7 +1,7 @@
 package chat.client;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.NoSuchElementException;
@@ -14,10 +14,12 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import chat.common.Message;
+
 public class Client {
   private Scanner input;
   private String clientName;
-  private DataOutputStream outputStream;
+  private ObjectOutputStream outputStream;
   private int port = 4000;
   private String host = "localhost";
 
@@ -25,7 +27,7 @@ public class Client {
     Options options = new Options();
     options.addOption("p", "port", true, "port for the chat server");
     options.addOption("s", "server", true, "server inet address");
-    options.addOption("h", false, "print this help message");
+    options.addOption("h", "help", false, "print this help message");
 
     CommandLineParser parser = new DefaultParser();
     CommandLine cmd = parser.parse( options, args);
@@ -54,12 +56,14 @@ public class Client {
     ServerListener serverListener = new ServerListener(serverSocket, Thread.currentThread());
     Thread connectionThread = new Thread(serverListener);
     connectionThread.start();
-    outputStream = new DataOutputStream(serverSocket.getOutputStream());
+    outputStream = new ObjectOutputStream(serverSocket.getOutputStream());
     sendClientNameToServer();
     while (!serverSocket.isClosed()) {
       try {
-        String message = input.nextLine();
-        outputStream.writeUTF(message);
+        String body = input.nextLine();
+        //TODO detect message type here
+        Message message = new Message(clientName, Message.MessageType.MESSAGE, body);
+        outputStream.writeObject(message);
       } catch (NoSuchElementException e) {
         System.out.println("Closing main client process");
         break;
@@ -74,14 +78,15 @@ public class Client {
 
   private void sendClientNameToServer() {
     try {
-      outputStream.writeUTF(clientName);
+      Message connectionMessage = new Message(clientName, Message.MessageType.CONNECTION, clientName + " has entered the chat");
+      outputStream.writeObject(connectionMessage);
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
 	public static void main(String[] args) throws Exception {
-	  Client client = new Client();
+    Client client = new Client();
 	  client.gatherCommandlineArgs(args);
 	  client.run();
 	}

@@ -1,5 +1,6 @@
 package chat.server.actions;
 
+import chat.common.Message;
 import chat.server.ClientConnectionForActions;
 
 public class ExitAction implements ChatAction{
@@ -14,7 +15,8 @@ public class ExitAction implements ChatAction{
   public boolean attemptAction(String actionString, String clientName) {
     if (actionString.equals(EXIT_MESSAGE)) {
       this.clientConnectionForActions.closeConnection();
-      this.clientConnectionForActions.broadCastMessage(clientName + " has exited", clientName);
+      Message exitMessage = new Message(clientName, Message.MessageType.EXIT, clientName + " has exited");
+      this.clientConnectionForActions.broadCastMessage(exitMessage);
       return true;
     }
     return false;

@@ -1,9 +1,9 @@
 package chat.server;
 
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
@@ -20,6 +20,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import chat.common.Message;
 import chat.server.actions.ActiveUsersAction;
 import chat.server.actions.ChatAction;
 import chat.server.actions.ExitAction;
@@ -30,8 +31,8 @@ public class Server{
 
   private final class ClientConnection implements Runnable, ClientConnectionForActions {
     private final Socket incomingSocket;
-    private DataInputStream inputStream;
-    private DataOutputStream outputStream;
+    private ObjectInputStream inputStream;
+    private ObjectOutputStream outputStream;
     private String clientName;
     private ChatAction[] actions = {new ExitAction(this), new ActiveUsersAction(this)};
     boolean active = true;
@@ -39,7 +40,7 @@ public class Server{
     private ClientConnection(Socket incomingSocket) {
       this.incomingSocket = incomingSocket;
       try {
-        this.outputStream = new DataOutputStream(incomingSocket.getOutputStream());
+        this.outputStream = new ObjectOutputStream(incomingSocket.getOutputStream());
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -48,20 +49,21 @@ public class Server{
     @Override
     public void run() {
       try {
-        inputStream = new DataInputStream(new BufferedInputStream(incomingSocket.getInputStream()));
-        clientName = inputStream.readUTF();
-        broadCastMessage(clientName + " has entered the chat", clientName);
+        inputStream = new ObjectInputStream(new BufferedInputStream(incomingSocket.getInputStream()));
+        Message connectionMessage = (Message)inputStream.readObject();
+        clientName = connectionMessage.getSender();
         activeConnections.put(clientName, this);
+        broadCastMessage(connectionMessage);
         while (active) {
-          String data;
-          data = inputStream.readUTF();
-          List<ChatAction> performedActions = Arrays.stream(actions).filter(action -> action.attemptAction(data, clientName))
+          Message message = (Message)inputStream.readObject();
+          String body = message.getBody();
+          List<ChatAction> performedActions = Arrays.stream(actions).filter(action -> action.attemptAction(body, clientName)) //todo get this working with actions
               .collect(Collectors.toList());
           if (!performedActions.isEmpty()) {
             performedActions.forEach(action -> System.out.println(clientName + " performed Action " + action.getClass()));
           } else {
-            System.out.println(clientName + ": " + data);
-            broadCastMessage(clientName + ": " + data, clientName);
+            System.out.println(clientName + ": " + body);
+            broadCastMessage(message);
           }
         }
       } catch (Exception e) {
@@ -69,12 +71,12 @@ public class Server{
       }
     }
 
-    public void sendMessage(String message) throws IOException {
-      outputStream.writeUTF(message);
+    public void sendMessage(String body) throws IOException {
+      outputStream.writeObject(body);
     }
 
-    public void broadCastMessage(String message, String fromClient) {
-      Server.this.broadCastMessage(message, fromClient);
+    public void broadCastMessage(Message message) {
+      Server.this.broadCastMessage(message);
     }
 
     @Override
@@ -121,7 +123,7 @@ public class Server{
   public void gatherCommandlineArgs(String[] args) throws ParseException {
     Options options = new Options();
     options.addOption("p", "port", true, "port for the chat server");
-    options.addOption("h", false, "print this help message");
+    options.addOption("h", "help", false, "print this help message");
 
     CommandLineParser parser = new DefaultParser();
     CommandLine cmd = parser.parse( options, args);
@@ -156,14 +158,14 @@ public class Server{
     }
   }
 
-  public void broadCastMessage(String message, String fromClient) {
+  public void broadCastMessage(Message message) {
     for (Map.Entry<String,ClientConnection> connection : activeConnections.entrySet()) {
-      if (!connection.getKey().equals(fromClient)) {
+      if (!connection.getKey().equals(message.getSender())) {
         try {
-          connection.getValue().sendMessage(message);
+          connection.getValue().sendMessage(message.getBody());
         } catch (IOException e) {
           e.printStackTrace();
-          System.out.println("Error sending message to : " + fromClient);
+          System.out.println("Error sending message to : " + message.getSender());
         }
       }
     }
