@@ -1,17 +1,10 @@
 package chat.server;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,98 +14,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import chat.common.Message;
-import chat.server.actions.ActiveUsersAction;
-import chat.server.actions.ChatAction;
-import chat.server.actions.ExitAction;
 
 public class Server{
 	private int port = 4000;
   private Map<String, ClientConnection> activeConnections;
 
-  private final class ClientConnection implements Runnable, ClientConnectionForActions {
-    private final Socket incomingSocket;
-    private ObjectInputStream inputStream;
-    private ObjectOutputStream outputStream;
-    private String clientName;
-    private ChatAction[] actions = {new ExitAction(this), new ActiveUsersAction(this)};
-    boolean active = true;
 
-    private ClientConnection(Socket incomingSocket) {
-      this.incomingSocket = incomingSocket;
-      try {
-        this.outputStream = new ObjectOutputStream(incomingSocket.getOutputStream());
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-    @Override
-    public void run() {
-      try {
-        inputStream = new ObjectInputStream(new BufferedInputStream(incomingSocket.getInputStream()));
-        Message connectionMessage = (Message)inputStream.readObject();
-        clientName = connectionMessage.getSender();
-        activeConnections.put(clientName, this);
-        broadCastMessage(connectionMessage);
-        while (active) {
-          Message message = (Message)inputStream.readObject();
-          String body = message.getBody();
-          List<ChatAction> performedActions = Arrays.stream(actions).filter(action -> action.attemptAction(body, clientName)) //todo get this working with actions
-              .collect(Collectors.toList());
-          if (!performedActions.isEmpty()) {
-            performedActions.forEach(action -> System.out.println(clientName + " performed Action " + action.getClass()));
-          } else {
-            System.out.println(clientName + ": " + body);
-            broadCastMessage(message);
-          }
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
-    public void sendMessage(String body) throws IOException {
-      outputStream.writeObject(body);
-    }
-
-    public void broadCastMessage(Message message) {
-      Server.this.broadCastMessage(message);
-    }
-
-    @Override
-    public void sendToClient(String message) {
-      try {
-        this.sendMessage(message);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-    public void closeConnection() {
-      try {
-        incomingSocket.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      try {
-        inputStream.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      try {
-        outputStream.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      activeConnections.remove(clientName);
-      active = false;
-    }
-
-    @Override
-    public Collection<String> activeUsers() {
-      return activeConnections.keySet();
-    }
-  }
 
 	public static void main(String[] args) throws Exception {
     Server server = new Server();
@@ -149,7 +56,7 @@ public class Server{
         Socket incomingSocket = listeningServer.accept();
         System.out.println(incomingSocket); //TODO Make this message more friendly
 
-        ClientConnection connection = new ClientConnection(incomingSocket);
+        ClientConnection connection = new ClientConnection(incomingSocket, this);
         Thread connectionThread = new Thread(connection);
         connectionThread.start();
       }
@@ -162,12 +69,16 @@ public class Server{
     for (Map.Entry<String,ClientConnection> connection : activeConnections.entrySet()) {
       if (!connection.getKey().equals(message.getSender())) {
         try {
-          connection.getValue().sendMessage(message.getBody());
+          connection.getValue().sendMessage(message);
         } catch (IOException e) {
           e.printStackTrace();
           System.out.println("Error sending message to : " + message.getSender());
         }
       }
     }
+  }
+
+  public Map<String, ClientConnection> getActiveConnections() {
+    return activeConnections;
   }
 }

@@ -32,4 +32,8 @@ public class Message implements Serializable{
   public MessageType getType() {
     return type;
   }
+
+  public String toString() {
+    return "(" + type.name() + ") " + sender + ": " + body;
+  }
 }

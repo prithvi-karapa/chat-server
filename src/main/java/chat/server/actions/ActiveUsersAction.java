@@ -1,5 +1,6 @@
 package chat.server.actions;
 
+import chat.common.Message;
 import chat.server.ClientConnectionForActions;
 
 public class ActiveUsersAction implements ChatAction{
@@ -13,7 +14,8 @@ public class ActiveUsersAction implements ChatAction{
   @Override
   public boolean attemptAction(String actionString, String clientName) {
     if (ACTIVE_USER_MESSAGE.equals(actionString)) {
-      clientConnectionForActions.sendToClient(String.join(", ", clientConnectionForActions.activeUsers()));
+      Message activeUsersMessage = new Message("server", Message.MessageType.COMMAND, String.join(", ", clientConnectionForActions.activeUsers()));
+      clientConnectionForActions.sendToClient(activeUsersMessage);
       return true;
     }
     return false;
