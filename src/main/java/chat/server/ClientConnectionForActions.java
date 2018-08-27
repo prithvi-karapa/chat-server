@@ -9,4 +9,5 @@ public interface ClientConnectionForActions {
   void sendToClient(Message message);
   void closeConnection();
   Collection<String> activeUsers();
+  void connect(String clientName);
 }

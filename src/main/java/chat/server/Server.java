@@ -19,8 +19,6 @@ public class Server{
 	private int port = 4000;
   private Map<String, ClientConnection> activeConnections;
 
-
-
 	public static void main(String[] args) throws Exception {
     Server server = new Server();
     server.gatherCommandlineArgs(args);

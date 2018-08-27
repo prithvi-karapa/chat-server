@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import chat.common.Message;
 import chat.server.actions.ActiveUsersAction;
 import chat.server.actions.ChatAction;
+import chat.server.actions.ConnectAction;
 import chat.server.actions.ExitAction;
 
 public final class ClientConnection implements Runnable, ClientConnectionForActions {
@@ -19,7 +20,7 @@ public final class ClientConnection implements Runnable, ClientConnectionForActi
   private ObjectInputStream inputStream;
   private ObjectOutputStream outputStream;
   private String clientName;
-  private ChatAction[] actions = {new ExitAction(this), new ActiveUsersAction(this)};
+  private ChatAction[] actions = {new ExitAction(this), new ActiveUsersAction(this), new ConnectAction(this)};
   private Server server;
   boolean active = true;
 
@@ -37,14 +38,10 @@ public final class ClientConnection implements Runnable, ClientConnectionForActi
   public void run() {
     try {
       inputStream = new ObjectInputStream(incomingSocket.getInputStream());
-      Message connectionMessage = (Message)inputStream.readObject();
-      clientName = connectionMessage.getSender();
-      server.getActiveConnections().put(clientName, this);
-      broadCastMessage(connectionMessage);
       while (active) {
         Message message = (Message)inputStream.readObject();
         String body = message.getBody();
-        List<ChatAction> performedActions = Arrays.stream(actions).filter(action -> action.attemptAction(body, clientName)) //todo get this working with actions
+        List<ChatAction> performedActions = Arrays.stream(actions).filter(action -> action.attemptAction(message))
             .collect(Collectors.toList());
         if (!performedActions.isEmpty()) {
           performedActions.forEach(action -> System.out.println(clientName + " performed Action " + action.getClass()));
@@ -75,6 +72,7 @@ public final class ClientConnection implements Runnable, ClientConnectionForActi
     }
   }
 
+  @Override
   public void closeConnection() {
     try {
       incomingSocket.close();
@@ -93,6 +91,12 @@ public final class ClientConnection implements Runnable, ClientConnectionForActi
     }
     server.getActiveConnections().remove(clientName);
     active = false;
+  }
+
+  @Override
+  public void connect(String clientName) {
+    this.clientName = clientName;
+    server.getActiveConnections().put(clientName, this);
   }
 
   @Override

@@ -33,7 +33,15 @@ public class Message implements Serializable{
     return type;
   }
 
+  public void setBody(String body) {
+    this.body = body;
+  }
+
   public String toString() {
-    return "(" + type.name() + ") " + sender + ": " + body;
+    if (type == MessageType.CONNECTION) {
+      return "(" + type.name() + ") " + ": " + body;
+    } else {
+      return "(" + type.name() + ") " + sender + ": " + body;
+    }
   }
 }

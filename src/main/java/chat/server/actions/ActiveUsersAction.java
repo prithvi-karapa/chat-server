@@ -4,7 +4,6 @@ import chat.common.Message;
 import chat.server.ClientConnectionForActions;
 
 public class ActiveUsersAction implements ChatAction{
-  private static final String ACTIVE_USER_MESSAGE = "who";
   private ClientConnectionForActions clientConnectionForActions;
 
   public ActiveUsersAction (ClientConnectionForActions clientConnectionForActions) {
@@ -12,10 +11,10 @@ public class ActiveUsersAction implements ChatAction{
   }
 
   @Override
-  public boolean attemptAction(String actionString, String clientName) {
-    if (ACTIVE_USER_MESSAGE.equals(actionString)) {
-      Message activeUsersMessage = new Message("server", Message.MessageType.COMMAND, String.join(", ", clientConnectionForActions.activeUsers()));
-      clientConnectionForActions.sendToClient(activeUsersMessage);
+  public boolean attemptAction(Message message) {
+    if (Message.MessageType.COMMAND.equals(message.getType())) { //todo allow multiple types
+      message.setBody(clientConnectionForActions.activeUsers().toString()); //TODO construct new message object in every action
+      clientConnectionForActions.sendToClient(message);
       return true;
     }
     return false;

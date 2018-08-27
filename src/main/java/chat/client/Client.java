@@ -17,6 +17,9 @@ import org.apache.commons.cli.ParseException;
 import chat.common.Message;
 
 public class Client {
+  private static final String EXIT_MESSAGE = "exit";
+  private static final String ACTIVE_USERS_MESSAGE = "who";
+
   private Scanner input;
   private String clientName;
   private ObjectOutputStream outputStream;
@@ -61,8 +64,7 @@ public class Client {
     while (!serverSocket.isClosed()) {
       try {
         String body = input.nextLine();
-        //TODO detect message type here
-        Message message = new Message(clientName, Message.MessageType.MESSAGE, body);
+        Message message = constructMessage(body);
         outputStream.writeObject(message);
       } catch (NoSuchElementException e) {
         System.out.println("Closing main client process");
@@ -82,6 +84,16 @@ public class Client {
       outputStream.writeObject(connectionMessage);
     } catch (IOException e) {
       e.printStackTrace();
+    }
+  }
+
+  private Message constructMessage(String body) {
+    if (EXIT_MESSAGE.equals(body)) {
+      return new Message(clientName, Message.MessageType.EXIT, clientName + " has exited");
+    } else if (ACTIVE_USERS_MESSAGE.equals(body)) {
+      return new Message("server", Message.MessageType.COMMAND, "TODO figure out what to send");
+    } else {
+      return new Message(clientName, Message.MessageType.MESSAGE, body);
     }
   }
 
