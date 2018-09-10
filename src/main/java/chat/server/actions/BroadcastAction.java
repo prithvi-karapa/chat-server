@@ -11,10 +11,9 @@ public class BroadcastAction implements ChatAction{
   }
 
   @Override
-  public boolean attemptAction(Message message) {
+  public void performAction(Message message) {
     if (!Message.MessageType.COMMAND.equals(message.getType())) {
       this.clientConnectionForActions.broadCastMessage(message);
     }
-    return false;
   }
 }

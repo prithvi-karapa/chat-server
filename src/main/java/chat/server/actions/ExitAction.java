@@ -11,11 +11,10 @@ public class ExitAction implements ChatAction{
   }
 
   @Override
-  public boolean attemptAction(Message message) {
+  public void performAction(Message message) {
     if (Message.MessageType.EXIT.equals(message.getType())) {
       this.clientConnectionForActions.closeConnection();
-      return true;
+      System.out.println(message.getSender() + " has exited");
     }
-    return false;
   }
 }

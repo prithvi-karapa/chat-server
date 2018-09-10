@@ -91,7 +91,7 @@ public class Client {
     if (EXIT_MESSAGE.equals(body)) {
       return new Message(clientName, Message.MessageType.EXIT, clientName + " has exited");
     } else if (ACTIVE_USERS_MESSAGE.equals(body)) {
-      return new Message("server", Message.MessageType.COMMAND, "TODO figure out what to send");
+      return new Message(clientName, Message.MessageType.COMMAND, "TODO figure out what to send");
     } else {
       return new Message(clientName, Message.MessageType.MESSAGE, body);
     }

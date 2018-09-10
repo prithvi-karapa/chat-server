@@ -12,11 +12,10 @@ public class ConnectAction implements ChatAction {
   }
 
   @Override
-  public boolean attemptAction(Message message) {
+  public void performAction(Message message) {
     if (Message.MessageType.CONNECTION.equals(message.getType())) {
       clientConnectionForActions.connect(message.getSender());
-      return true;
+      System.out.println(message.getSender() + " has connected");
     }
-    return false;
   }
 }

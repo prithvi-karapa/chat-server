@@ -6,8 +6,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import chat.common.Message;
 import chat.server.actions.ActiveUsersAction;
@@ -45,12 +43,7 @@ public final class ClientConnection implements Runnable, ClientConnectionForActi
       inputStream = new ObjectInputStream(incomingSocket.getInputStream());
       while (active) {
         Message message = (Message)inputStream.readObject();
-        String body = message.getBody();
-        List<ChatAction> performedActions = Arrays.stream(actions).filter(action -> action.attemptAction(message))
-            .collect(Collectors.toList());
-        if (!performedActions.isEmpty()) {
-          performedActions.forEach(action -> System.out.println(clientName + " performed Action " + action.getClass()));
-        }
+        Arrays.stream(actions).forEach(action -> action.performAction(message));
       }
     } catch (Exception e) {
       e.printStackTrace();
