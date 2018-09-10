@@ -15,7 +15,6 @@ public class ConnectAction implements ChatAction {
   public boolean attemptAction(Message message) {
     if (Message.MessageType.CONNECTION.equals(message.getType())) {
       clientConnectionForActions.connect(message.getSender());
-      clientConnectionForActions.broadCastMessage(message);
       return true;
     }
     return false;

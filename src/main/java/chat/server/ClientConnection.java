@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import chat.common.Message;
 import chat.server.actions.ActiveUsersAction;
+import chat.server.actions.BroadcastAction;
 import chat.server.actions.ChatAction;
 import chat.server.actions.ConnectAction;
 import chat.server.actions.ExitAction;
@@ -20,7 +21,11 @@ public final class ClientConnection implements Runnable, ClientConnectionForActi
   private ObjectInputStream inputStream;
   private ObjectOutputStream outputStream;
   private String clientName;
-  private ChatAction[] actions = {new ExitAction(this), new ActiveUsersAction(this), new ConnectAction(this)};
+  private ChatAction[] actions = {
+      new ExitAction(this),
+      new ActiveUsersAction(this),
+      new ConnectAction(this),
+      new BroadcastAction(this)};
   private Server server;
   boolean active = true;
 
@@ -45,9 +50,6 @@ public final class ClientConnection implements Runnable, ClientConnectionForActi
             .collect(Collectors.toList());
         if (!performedActions.isEmpty()) {
           performedActions.forEach(action -> System.out.println(clientName + " performed Action " + action.getClass()));
-        } else {
-          System.out.println(clientName + ": " + body);
-          broadCastMessage(message);
         }
       }
     } catch (Exception e) {
