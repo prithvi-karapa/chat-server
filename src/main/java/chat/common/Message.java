@@ -32,4 +32,16 @@ public class Message implements Serializable{
   public MessageType getType() {
     return type;
   }
+
+  public void setBody(String body) {
+    this.body = body;
+  }
+
+  public String toString() {
+    if (type == MessageType.CONNECTION || type == MessageType.EXIT) {
+      return "(" + type.name() + ") " + ": " + body;
+    } else {
+      return "(" + type.name() + ") " + sender + ": " + body;
+    }
+  }
 }

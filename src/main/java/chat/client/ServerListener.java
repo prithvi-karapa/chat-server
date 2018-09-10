@@ -1,6 +1,5 @@
 package chat.client;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
@@ -19,10 +18,16 @@ public class ServerListener implements Runnable {
 
   @Override
   public void run() {
+    ObjectInputStream inputStream;
+    try {
+      inputStream = new ObjectInputStream(socket.getInputStream());
+    } catch (IOException e) {
+      e.printStackTrace();
+      return;
+    }
     while(true) {
       try {
-        ObjectInputStream inputSteam = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-        System.out.println(inputSteam.readObject().toString());
+        System.out.println(inputStream.readObject().toString());
       } catch (IOException | ClassNotFoundException e) {
         break;
       }
