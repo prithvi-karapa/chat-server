@@ -38,7 +38,7 @@ public class Message implements Serializable{
   }
 
   public String toString() {
-    if (type == MessageType.CONNECTION) {
+    if (type == MessageType.CONNECTION || type == MessageType.EXIT) {
       return "(" + type.name() + ") " + ": " + body;
     } else {
       return "(" + type.name() + ") " + sender + ": " + body;
