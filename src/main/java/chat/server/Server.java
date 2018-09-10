@@ -65,7 +65,7 @@ public class Server{
 
   public void broadCastMessage(Message message) {
     for (Map.Entry<String,ClientConnection> connection : activeConnections.entrySet()) {
-      if (!connection.getKey().equals(message.getSender())) {
+      if (!connection.getKey().equals(message.getSender()) && (message.getAudienceMembers().isEmpty() || message.getAudienceMembers().contains(connection.getKey()))) {
         try {
           connection.getValue().sendMessage(message);
         } catch (IOException e) {

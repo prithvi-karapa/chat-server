@@ -6,6 +6,11 @@ import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -64,7 +69,18 @@ public class Client {
     sendClientNameToServer();
     while (!serverSocket.isClosed()) {
       String body = input.readLine();
-      sendMessage(body, serverSocket, outputStream);
+      List<String> audienceOfMessage = parseAudience(body);
+      sendMessage(body, audienceOfMessage, serverSocket, outputStream);
+    }
+  }
+
+  private List<String> parseAudience(String body) {
+    String[] parts = body.split(":");
+    if (parts.length > 1) {
+      String[] audienceMembers = parts[1].split(",");
+      return Arrays.stream(audienceMembers).collect(Collectors.toList());
+    } else {
+      return Collections.emptyList();
     }
   }
 
@@ -82,7 +98,7 @@ public class Client {
     }
   }
 
-  private void sendMessage(String body, Socket serverSocket, ObjectOutputStream outputStream) throws IOException{
+  private void sendMessage(String body, List<String> audience, Socket serverSocket, ObjectOutputStream outputStream) throws IOException{
 
     Message message;
     if (EXIT_MESSAGE.equals(body)) {
@@ -94,7 +110,7 @@ public class Client {
       //TODO: Figure out the body of the message. Solution: Mapping 'COMMAND' to Action
       outputStream.writeObject(message);
     } else {
-      message = new Message(clientName, Message.MessageType.MESSAGE, body);
+      message = new Message(clientName, Message.MessageType.MESSAGE, body, audience);
       outputStream.writeObject(message);
     }
   }

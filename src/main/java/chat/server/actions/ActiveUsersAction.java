@@ -11,11 +11,11 @@ public class ActiveUsersAction implements ChatAction{
   }
 
   @Override
-  public void performAction(Message message) {
-    if (Message.MessageType.COMMAND.equals(message.getType())) { //todo allow multiple types
-      message.setBody(clientConnectionForActions.activeUsers().toString()); //TODO construct new message object in every action
-      clientConnectionForActions.sendToClient(message);
-      System.out.println(message.getSender() + " has requested active user list");
+  public void performAction(Message requestMessage) {
+    if (Message.MessageType.COMMAND.equals(requestMessage.getType())) { //todo allow multiple types
+      Message returnMessage = new Message("server", Message.MessageType.RESPONSE, clientConnectionForActions.activeUsers().toString(), requestMessage.getTimestamp());
+      clientConnectionForActions.sendToClient(returnMessage);
+      System.out.println(requestMessage.getSender() + " has requested active user list");
     }
   }
 }
