@@ -24,12 +24,14 @@ import chat.common.Message;
 public class Client {
   private static final String EXIT_MESSAGE = "exit";
   private static final String ACTIVE_USERS_MESSAGE = "who";
+  private static final String AUDIENCE_COMMAND = "audience";
 
   private BufferedReader input;
   private String clientName;
   private ObjectOutputStream outputStream;
   private int port = 4000;
   private String host = "localhost";
+  private List<String> audience = new ArrayList<>();
 
   public void gatherCommandlineArgs(String[] args) throws ParseException {
     Options options = new Options();
@@ -69,19 +71,28 @@ public class Client {
     sendClientNameToServer();
     while (!serverSocket.isClosed()) {
       String body = input.readLine();
-      List<String> audienceOfMessage = parseAudience(body);
-      sendMessage(body, audienceOfMessage, serverSocket, outputStream);
+      if (!setAudienceCommand(body)) {
+        sendMessage(body, this.audience, serverSocket, outputStream);
+      }
     }
   }
 
-  private List<String> parseAudience(String body) {
-    String[] parts = body.split(":");
-    if (parts.length > 1) {
-      String[] audienceMembers = parts[1].split(",");
-      return Arrays.stream(audienceMembers).collect(Collectors.toList());
-    } else {
-      return Collections.emptyList();
+  /**
+   * @return trye if this is an audience command
+   */
+  private boolean setAudienceCommand(String command) {
+    String[] parts = command.split(":");
+    boolean isAudienceCommand = AUDIENCE_COMMAND.equals(parts[0]);
+    if (isAudienceCommand) {
+      if (parts.length > 1 && isAudienceCommand) {
+        String[] audienceMembers = parts[1].split(",");
+        audience = Arrays.stream(audienceMembers).collect(Collectors.toList());
+        return true;
+      } else {
+        audience = Collections.emptyList();
+      }
     }
+    return isAudienceCommand;
   }
 
   private void assignClientName() throws IOException{
