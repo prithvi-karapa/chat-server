@@ -22,13 +22,10 @@ import org.apache.commons.cli.ParseException;
 import chat.common.Message;
 
 public class Client {
-  private static final String EXIT_MESSAGE = "exit";
-  private static final String ACTIVE_USERS_MESSAGE = "who";
   private static final String AUDIENCE_COMMAND = "audience";
 
   private BufferedReader input;
   private String clientName;
-  private ObjectOutputStream outputStream;
   private int port = 4000;
   private String host = "localhost";
   private List<String> audience = new ArrayList<>();
@@ -62,17 +59,13 @@ public class Client {
     input = new BufferedReader(new InputStreamReader(System.in));
 
     assignClientName();
-    final InetAddress SERVER_ADDRESS = InetAddress.getByName(host);
-    Socket serverSocket = new Socket(SERVER_ADDRESS, port);
-    ServerListener serverListener = new ServerListener(serverSocket, Thread.currentThread());
-    Thread connectionThread = new Thread(serverListener);
-    connectionThread.start();
-    outputStream = new ObjectOutputStream(serverSocket.getOutputStream());
-    sendClientNameToServer();
-    while (!serverSocket.isClosed()) {
+    ClientMessageSender messageSender = new SocketClientMessageSender(host, port);
+    messageSender.connectToServer();
+    messageSender.sendClientNameToServer(clientName);
+    while (messageSender.isConnectionActive()) {
       String body = input.readLine();
       if (!setAudienceCommand(body)) {
-        sendMessage(body, this.audience, serverSocket, outputStream);
+        messageSender.sendMessage(clientName, body, this.audience);
       }
     }
   }
@@ -98,32 +91,6 @@ public class Client {
   private void assignClientName() throws IOException{
     System.out.println("Please enter your name: ");
     clientName = input.readLine();
-  }
-
-  private void sendClientNameToServer() {
-    try {
-      Message connectionMessage = new Message(clientName, Message.MessageType.CONNECTION, clientName + " has entered the chat");
-      outputStream.writeObject(connectionMessage);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void sendMessage(String body, List<String> audience, Socket serverSocket, ObjectOutputStream outputStream) throws IOException{
-
-    Message message;
-    if (EXIT_MESSAGE.equals(body)) {
-      message = new Message(clientName, Message.MessageType.EXIT, clientName + " has exited");
-      outputStream.writeObject(message);
-      serverSocket.close();
-    } else if (ACTIVE_USERS_MESSAGE.equals(body)) {
-      message = new Message(clientName, Message.MessageType.COMMAND, "TODO figure out what to send");
-      //TODO: Figure out the body of the message. Solution: Mapping 'COMMAND' to Action
-      outputStream.writeObject(message);
-    } else {
-      message = new Message(clientName, Message.MessageType.MESSAGE, body, audience);
-      outputStream.writeObject(message);
-    }
   }
 
 	public static void main(String[] args) throws Exception {
